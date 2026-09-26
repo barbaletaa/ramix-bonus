@@ -171,9 +171,9 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
 
     <div class="section">
       <h2>Сколько разослано</h2>
-      <p class="hint" style="margin:-6px 0 12px">В конце месяца каждый менеджер один раз вписывает, скольким клиентам примерно отправил сообщение.</p>
+      <p class="hint" style="margin:-6px 0 12px">В конце каждого дня впишите, скольким клиентам сегодня отправили сообщение. Если ошиблись — впишите заново, число за сегодня заменится.</p>
       <div class="two">
-        <div><label for="mailCount">Отправлено сообщений</label><input id="mailCount" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="mailCount">Отправлено сегодня</label><input id="mailCount" inputmode="numeric" autocomplete="off"></div>
         <div style="display:flex;align-items:flex-end"><button class="btn wide" id="mailSave" type="button">Сохранить</button></div>
       </div>
       <div id="mailMsg" aria-live="polite"></div>
@@ -354,10 +354,11 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
   }
 
   function renderMailing(){
-    const total = mailing.reduce((s,m)=>s+(+m.count||0),0);
+    const total = mailing.reduce((s,m)=>s+(+m.total||0),0);
+    const today = mailing.reduce((s,m)=>s+(+m.today||0),0);
     $("mailList").innerHTML = mailing.length
-      ? mailing.map(m=>'<li class="item"><div class="item-top"><span>'+esc(m.manager)+'</span><b>'+(+m.count||0)+'</b></div></li>').join("")
-        + '<li class="item"><div class="item-top"><span>Всего</span><b>'+total+'</b></div></li>'
+      ? mailing.map(m=>'<li class="item"><div class="item-top"><span>'+esc(m.manager)+'<br><span class="meta">сегодня: '+(+m.today||0)+'</span></span><b>всего '+(+m.total||0)+'</b></div></li>').join("")
+        + '<li class="item"><div class="item-top"><span><b>Все менеджеры</b><br><span class="meta">сегодня: '+today+'</span></span><b>всего '+total+'</b></div></li>'
       : '<li class="empty">Пока никто не вписал.</li>';
   }
 
@@ -460,7 +461,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
   $("mailSave").addEventListener("click", async ()=>{
     const el = $("mailMsg"); const count = Number(String($("mailCount").value).replace(/\D/g,""));
     if (!count) return msg(el,"err","Впишите примерное число отправленных сообщений.");
-    try{ const j = await api("mailing", {manager: session.name, count}); if(!j.ok) throw new Error(); $("mailCount").value=""; msg(el,"good","Сохранено."); load(); }
+    try{ const j = await api("mailing", {manager: session.name, count}); if(!j.ok) throw new Error(); $("mailCount").value=""; msg(el,"good","Сохранено за сегодня."); load(); }
     catch(e){ if (e.message!=="pin") msg(el,"err","Не сохранилось. Попробуйте ещё раз."); }
   });
 
