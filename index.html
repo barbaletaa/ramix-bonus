@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Рекомендуйте Ramix — учёт</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Onest:wght@400;500;600&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5EDD9; --surface:#FBF6EA; --line:#DCCFB2; --text:#1E1A16; --muted:#6E6453;
+  --gold:#9A7430; --gold-soft:#E9DCBC; --ok:#4E7A45; --ok-soft:#DCE8D4; --warn:#A5552F; --warn-soft:#F3DCCF;
+  --serif:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --sans:"Onest", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14110E; --surface:#1E1A16; --line:#3A3229; --text:#F5EDD9; --muted:#AFA38E;
+    --gold:#C9A45C; --gold-soft:#2E2618; --ok:#9DBF8E; --ok-soft:#1F2A1C; --warn:#E0967A; --warn-soft:#33201A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14110E; --surface:#1E1A16; --line:#3A3229; --text:#F5EDD9; --muted:#AFA38E;
+  --gold:#C9A45C; --gold-soft:#2E2618; --ok:#9DBF8E; --ok-soft:#1F2A1C; --warn:#E0967A; --warn-soft:#33201A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:400 18px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:28px 18px 60px}
+h1{font:600 2.4rem/1.05 var(--serif);margin:0 0 6px;letter-spacing:.01em}
+.dates{color:var(--muted);margin:0 0 22px}
+h2{font:600 1.55rem/1.15 var(--serif);margin:0 0 12px}
+.stat{border-top:1px solid var(--gold);border-bottom:1px solid var(--line);padding:16px 0 14px;margin-bottom:18px}
+.stat-main{display:flex;align-items:baseline;gap:10px}
+.stat-num{font:600 3.4rem/1 var(--serif);color:var(--gold)}
+.stat-lbl{color:var(--muted)}
+.bar{height:3px;background:var(--line);margin:12px 0 10px;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--gold);transition:width .4s}
+.stat-row{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:.92rem;color:var(--muted)}
+.stat-row b{color:var(--text);font-weight:600}
+.banner{padding:12px 14px;margin-bottom:18px;border-left:3px solid var(--warn);background:var(--warn-soft);font-size:.95rem}
+.banner.ok{border-color:var(--ok);background:var(--ok-soft)}
+.banner .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tabs{display:flex;border:1px solid var(--line);margin-bottom:20px}
+.tabs button{flex:1;background:none;border:0;padding:14px 6px;font:600 1rem var(--sans);color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--text);color:var(--bg)}
+.tabs button .cnt{display:inline-block;min-width:1.4em;margin-left:4px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--bg);font-size:.78rem}
+fieldset{border:0;margin:0 0 16px;padding:0}
+legend{font:600 1.2rem var(--serif);padding:0;margin-bottom:8px}
+label{display:block;font-size:.88rem;color:var(--muted);margin:0 0 4px}
+input{width:100%;padding:14px 14px;font:400 1.1rem var(--sans);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:2px}
+input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+.field{margin-bottom:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.hint{font-size:.85rem;color:var(--muted);margin:4px 0 0}
+.btn{display:inline-block;border:1px solid var(--text);background:var(--text);color:var(--bg);padding:15px 20px;font:600 1.05rem var(--sans);cursor:pointer;border-radius:2px}
+.btn.wide{width:100%}
+.btn.ghost{background:none;color:var(--text)}
+.btn.small{padding:11px 14px;font-size:.98rem}
+.linkbtn{background:none;border:0;padding:0;color:var(--muted);font:inherit;font-size:.9rem;text-decoration:underline;cursor:pointer}
+.sync{font-size:.85rem;color:var(--muted);margin:-14px 0 18px}
+.btn:focus-visible,.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn[disabled]{opacity:.5;cursor:default}
+.msg{margin-top:14px;padding:12px 14px;font-size:.95rem}
+.msg.err{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.msg.good{background:var(--ok-soft);border-left:3px solid var(--ok)}
+.msg.ask{background:var(--gold-soft);border-left:3px solid var(--gold)}
+.copybox{margin:10px 0 6px;padding:10px 12px;background:var(--surface);border:1px dashed var(--line);font-size:.93rem;user-select:all}
+.list{list-style:none;margin:0;padding:0}
+.item{border-bottom:1px solid var(--line);padding:14px 0}
+.item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.who{font-weight:600}
+.meta{font-size:.87rem;color:var(--muted)}
+.tag{flex:none;font-size:.78rem;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.tag.owed{background:var(--gold-soft);color:var(--gold)}
+.tag.given{background:var(--ok-soft);color:var(--ok)}
+.tag.disputed{background:var(--warn-soft);color:var(--warn)}
+.tag.rejected{background:var(--line);color:var(--muted)}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.found{padding:14px;border:1px solid var(--gold);margin:12px 0 22px}
+.found .big{font:600 1.35rem/1.2 var(--serif);margin-bottom:4px}
+.empty{color:var(--muted);padding:14px 0}
+.section{margin-top:28px}
+.readonly{padding:12px 14px;background:var(--gold-soft);margin-bottom:18px;font-size:.93rem}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Рекомендуйте Ramix</h1>
+  <p class="dates">Учёт программы с 28 сентября по 28 октября 2026</p>
+
+  <div id="nodb" class="readonly" hidden></div>
+
+  <!-- ВХОД -->
+  <section id="login" hidden>
+    <h2>Вход</h2>
+    <div class="field"><label for="lName">Ваше имя</label><input id="lName" autocomplete="off"></div>
+    <div class="field"><label for="lPin">Код доступа</label><input id="lPin" inputmode="numeric" autocomplete="off"><p class="hint">Код даёт Марьям. Вводится один раз, дальше телефон его запомнит.</p></div>
+    <button class="btn wide" id="lBtn" type="button">Войти</button>
+    <div id="lMsg" aria-live="polite"></div>
+  </section>
+
+  <div id="app" hidden>
+  <p class="sync" id="sync"></p>
+
+  <section class="stat" aria-live="polite">
+    <div class="stat-main"><span class="stat-num" id="sNew">0</span><span class="stat-lbl">новых клиентов из 5 до паузы рассылки</span></div>
+    <div class="bar"><i id="sBar" style="width:0"></i></div>
+    <div class="stat-row">
+      <span>Подарков к выдаче: <b id="sOwed">0</b></span>
+      <span>На подарки: <b id="sSpent">0 ₽</b> из 15–20 тыс.</span>
+      <span>Первые заказы новых: <b id="sRev">0 ₽</b></span>
+    </div>
+  </section>
+
+  <div id="limitBanner" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="add">Записать</button>
+    <button role="tab" aria-selected="false" data-tab="gifts">Подарки <span class="cnt" id="tOwed" hidden>0</span></button>
+    <button role="tab" aria-selected="false" data-tab="all">История</button>
+  </div>
+
+  <!-- ЗАПИСАТЬ -->
+  <section id="tab-add">
+    <p class="hint" style="margin:0 0 16px">Записывайте клиента, когда его первый заказ оплачен и он от 20 000 ₽. Перед записью проверьте номер нового клиента в своём WhatsApp: если он уже покупал, он не новый.</p>
+    <form id="form" novalidate>
+      <fieldset>
+        <legend>Кто рекомендовал</legend>
+        <div class="two">
+          <div><label for="refName">Имя</label><input id="refName" autocomplete="off"></div>
+          <div><label for="refPhone">Телефон</label><input id="refPhone" inputmode="tel" autocomplete="off" placeholder="+7"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Новый клиент</legend>
+        <div class="two">
+          <div><label for="newName">Имя или название</label><input id="newName" autocomplete="off"></div>
+          <div><label for="newPhone">Телефон</label><input id="newPhone" inputmode="tel" autocomplete="off" placeholder="+7"></div>
+        </div>
+        <div class="field" style="margin-top:10px"><label for="amount">Сумма первого заказа, ₽</label><input id="amount" inputmode="numeric" autocomplete="off" placeholder="20 000"></div>
+      </fieldset>
+      <button class="btn wide" type="submit" id="saveBtn">Записать клиента</button>
+    </form>
+    <div id="formMsg" aria-live="polite"></div>
+  </section>
+
+  <!-- ПОДАРКИ -->
+  <section id="tab-gifts" hidden>
+    <h2>Клиент делает заказ?</h2>
+    <div class="field"><label for="search">Введите его номер: покажу, положен ли ему подарок</label><input id="search" inputmode="tel" autocomplete="off" placeholder="+7"></div>
+    <div id="searchRes" aria-live="polite"></div>
+    <h2 class="section">Кому положен подарок</h2>
+    <ul class="list" id="owedList"></ul>
+  </section>
+
+  <!-- ВСЕ ЗАПИСИ -->
+  <section id="tab-all" hidden>
+    <div id="disputedWrap" hidden>
+      <h2>Под вопросом</h2>
+      <p class="hint" style="margin-top:-6px">Подарки по этим записям не выдаются, пока не будет решения.</p>
+      <ul class="list" id="disputedList"></ul>
+    </div>
+    <h2 class="section" id="allTitle">Все рекомендации по датам</h2>
+    <ul class="list" id="allList"></ul>
+
+    <div class="section">
+      <h2>Сколько разослано</h2>
+      <p class="hint" style="margin:-6px 0 12px">В конце месяца каждый менеджер один раз вписывает, скольким клиентам примерно отправил сообщение.</p>
+      <div class="two">
+        <div><label for="mailCount">Отправлено сообщений</label><input id="mailCount" inputmode="numeric" autocomplete="off"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn wide" id="mailSave" type="button">Сохранить</button></div>
+      </div>
+      <div id="mailMsg" aria-live="polite"></div>
+      <ul class="list" id="mailList" style="margin-top:12px"></ul>
+    </div>
+    <p class="section"><button class="linkbtn" id="logout" type="button">Выйти</button> <span class="meta" id="whoami"></span></p>
+  </section>
+  </div>
+</main>
+
+<script>
+(function(){
+  // ▼▼▼ СЮДА ВСТАВИТЬ ССЫЛКУ ВЕБ-ПРИЛОЖЕНИЯ ИЗ GOOGLE APPS SCRIPT ▼▼▼
+  const API_URL = "ВСТАВЬТЕ_ССЫЛКУ_СЮДА";
+  // ▲▲▲
+
+  const GIFT_COST = 2700;   // коробка 1 800 + 6 шт. 900
+  const MIN_ORDER = 20000;
+  const LIMIT = 5;
+  const $ = id => document.getElementById(id);
+
+  let records = [], mailing = [], settings = {}, isOwner = false;
+  let session = {name:"", pin:""};
+  try { session = JSON.parse(localStorage.getItem("ramix_session")||"{}"); } catch(e){}
+
+  // ---------- утилиты ----------
+  function normPhone(v){
+    let d = String(v||"").replace(/\D/g,"");
+    if (d.length === 11 && d[0] === "8") d = "7" + d.slice(1);
+    if (d.length === 10) d = "7" + d;
+    return d;
+  }
+  function fmtPhone(d){
+    d = String(d||"");
+    if (d.length === 11) return "+" + d[0] + " " + d.slice(1,4) + " " + d.slice(4,7) + "-" + d.slice(7,9) + "-" + d.slice(9);
+    return d ? "+" + d : "";
+  }
+  const rub = n => Math.round(n).toLocaleString("ru-RU") + " ₽";
+  const date = iso => { if(!iso) return ""; const x = new Date(iso); return isNaN(x) ? "" : x.toLocaleDateString("ru-RU",{day:"numeric",month:"long"}); };
+  function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+  function msg(el, kind, html){ el.innerHTML = html ? '<div class="msg '+kind+'">'+html+'</div>' : ""; }
+
+  // ---------- связь с таблицей ----------
+  async function api(action, data){
+    const res = await fetch(API_URL, {method:"POST", body: JSON.stringify(Object.assign({action, pin: session.pin}, data||{}))});
+    const j = await res.json();
+    if (j.error === "pin") { logout("Код доступа изменился. Введите новый код."); throw new Error("pin"); }
+    return j;
+  }
+  async function load(){
+    try{
+      const j = await api("list");
+      if (!j.ok) throw new Error(j.error||"err");
+      records = j.records || []; mailing = j.mailing || []; settings = j.settings || {}; isOwner = !!j.owner;
+      $("nodb").hidden = true;
+      $("sync").textContent = "Обновлено в " + new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+      render();
+      return true;
+    }catch(e){
+      if (e.message !== "pin"){ $("nodb").hidden = false; $("nodb").textContent = "Нет связи с базой. Проверьте интернет — страница попробует снова через минуту."; }
+      return false;
+    }
+  }
+
+  // ---------- вход ----------
+  function showApp(){ $("login").hidden = true; $("app").hidden = false; $("whoami").textContent = "Вы вошли как " + session.name + (isOwner ? " (владелец)" : ""); }
+  function logout(text){
+    session = {name:"", pin:""}; try{ localStorage.removeItem("ramix_session"); }catch(e){}
+    $("app").hidden = true; $("login").hidden = false; msg($("lMsg"), text ? "err" : "", text ? esc(text) : "");
+  }
+  $("lBtn").addEventListener("click", async ()=>{
+    const name = $("lName").value.trim(), pin = $("lPin").value.trim();
+    if (!name || !pin) return msg($("lMsg"),"err","Впишите имя и код доступа.");
+    session = {name, pin};
+    $("lBtn").disabled = true;
+    try{
+      const j = await api("list");
+      if (j.ok){ try{ localStorage.setItem("ramix_session", JSON.stringify(session)); }catch(e){}
+        records=j.records||[]; mailing=j.mailing||[]; settings=j.settings||{}; isOwner=!!j.owner; showApp(); render(); }
+    }catch(e){ if (e.message !== "pin") msg($("lMsg"),"err","Нет связи. Проверьте интернет и попробуйте ещё раз."); else msg($("lMsg"),"err","Неверный код доступа."); }
+    finally{ $("lBtn").disabled = false; }
+  });
+  $("logout").addEventListener("click", ()=>logout());
+
+  // ---------- вкладки ----------
+  document.querySelectorAll(".tabs button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x===b ? "true":"false"));
+      ["add","gifts","all"].forEach(t => $("tab-"+t).hidden = (t !== b.dataset.tab));
+    });
+  });
+
+  // ---------- отрисовка ----------
+  const active = r => r.status === "owed" || r.status === "given";
+  function render(){
+    const act = records.filter(active);
+    const owed = records.filter(r=>r.status==="owed");
+    const n = act.length;
+    $("sNew").textContent = n;
+    $("sBar").style.width = Math.min(100, n/LIMIT*100) + "%";
+    $("sOwed").textContent = owed.length;
+    $("sSpent").textContent = rub(n*GIFT_COST);
+    $("sRev").textContent = rub(act.reduce((s,r)=>s+(+r.amount||0),0));
+    $("tOwed").hidden = owed.length === 0; $("tOwed").textContent = owed.length;
+    $("whoami").textContent = "Вы вошли как " + session.name + (isOwner ? " (владелец)" : "");
+    renderBanner(n); renderOwed(owed); renderAll(); renderMailing(); runSearch();
+  }
+
+  function renderBanner(n){
+    const b = $("limitBanner");
+    const decision = settings.decision || "";
+    if (n < LIMIT){ b.hidden = true; return; }
+    b.hidden = false;
+    if (decision === "continue"){
+      b.className = "banner ok"; b.innerHTML = "Рассылка продолжается: решение принято после пятого нового клиента.";
+    } else if (decision === "stop"){
+      b.className = "banner"; b.innerHTML = "Рассылка остановлена до 28 октября. Новым клиентам сообщение не отправляем. Для тех, кто его уже получил, условия действуют без изменений.";
+    } else {
+      b.className = "banner";
+      b.innerHTML = "<b>Пятый новый клиент.</b> Поставьте рассылку на паузу: новым клиентам сообщение пока не отправляем. Рекомендации от тех, кто его уже получил, записываем как обычно."
+        + (isOwner ? '<div class="acts"><button class="btn small" data-dec="continue">Продолжить рассылку</button><button class="btn small ghost" data-dec="stop">Остановить до конца месяца</button></div>' : "");
+      b.querySelectorAll("[data-dec]").forEach(x=>x.addEventListener("click", ()=>act2("decision",{decision:x.dataset.dec})));
+    }
+  }
+
+  function card(r, actsHtml){
+    const tags = {owed:"Подарок к выдаче", given:"Выдан " + date(r.givenAt), disputed:"Под вопросом", rejected:"Отклонено"};
+    return '<li class="item"><div class="item-top"><div>'
+      + '<div class="meta">' + date(r.createdAt) + '</div>'
+      + '<div class="who">'+esc(r.refName)+' привёл(а) '+esc(r.newName)+'</div>'
+      + '<div class="meta">Первый заказ '+rub(+r.amount||0)+', менеджер '+esc(r.manager||"—")+'</div>'
+      + '<div class="meta">'+fmtPhone(r.refPhone)+' → '+fmtPhone(r.newPhone)+'</div>'
+      + (r.note ? '<div class="meta">'+esc(r.note)+'</div>' : '')
+      + '</div><span class="tag '+r.status+'">'+tags[r.status]+'</span></div>'
+      + (actsHtml ? '<div class="acts">'+actsHtml+'</div>' : '') + '</li>';
+  }
+
+  function renderOwed(owed){
+    const ul = $("owedList");
+    if (!owed.length){ ul.innerHTML = '<li class="empty">Сейчас никому не нужно класть подарок.</li>'; return; }
+    ul.innerHTML = owed.map(r => card(r, '<button class="btn small" data-give="'+r.id+'">Коробка положена в заказ</button>')).join("");
+    ul.querySelectorAll("[data-give]").forEach(b=>b.addEventListener("click", ()=>give([b.dataset.give])));
+  }
+
+  function renderAll(){
+    const disputed = records.filter(r=>r.status==="disputed");
+    $("disputedWrap").hidden = !disputed.length;
+    $("disputedList").innerHTML = disputed.map(r => card(r,
+      isOwner ? '<button class="btn small" data-ok="'+r.id+'">Подтвердить</button><button class="btn small ghost" data-no="'+r.id+'">Отклонить</button>' : '<span class="meta">Ждёт решения</span>'
+    )).join("");
+    $("disputedList").querySelectorAll("[data-ok]").forEach(b=>b.addEventListener("click", ()=>act2("decide",{id:b.dataset.ok, status:"owed"})));
+    $("disputedList").querySelectorAll("[data-no]").forEach(b=>b.addEventListener("click", ()=>act2("decide",{id:b.dataset.no, status:"rejected"})));
+    const rest = records.filter(r=>r.status!=="disputed");
+    $("allList").innerHTML = rest.length ? rest.map(r=>card(r,"")).join("") : '<li class="empty">Пока нет ни одной рекомендации. Первая появится здесь.</li>';
+  }
+
+  function renderMailing(){
+    const total = mailing.reduce((s,m)=>s+(+m.count||0),0);
+    $("mailList").innerHTML = mailing.length
+      ? mailing.map(m=>'<li class="item"><div class="item-top"><span>'+esc(m.manager)+'</span><b>'+(+m.count||0)+'</b></div></li>').join("")
+        + '<li class="item"><div class="item-top"><span>Всего</span><b>'+total+'</b></div></li>'
+      : '<li class="empty">Пока никто не вписал.</li>';
+  }
+
+  // ---------- поиск подарка ----------
+  $("search").addEventListener("input", runSearch);
+  function runSearch(){
+    const q = normPhone($("search").value);
+    const out = $("searchRes");
+    if (q.length < 11){ out.innerHTML = ""; return; }
+    const mine = records.filter(r=>String(r.refPhone)===q);
+    const owed = mine.filter(r=>r.status==="owed");
+    const disp = mine.filter(r=>r.status==="disputed");
+    if (owed.length){
+      out.innerHTML = '<div class="found"><div class="big">Положите в заказ: '+owed.length+' '+(owed.length===1?"коробку":"коробки")+' антизасора</div>'
+        + '<div class="meta">'+esc(owed[0].refName)+' привёл(а): '+owed.map(r=>esc(r.newName)).join(", ")+'</div>'
+        + '<div class="acts" style="margin-top:10px"><button class="btn small" id="giveAll">Положено в заказ</button></div></div>';
+      $("giveAll").addEventListener("click", ()=>give(owed.map(r=>r.id)));
+    } else if (disp.length){
+      out.innerHTML = '<div class="msg ask">По этому клиенту есть запись под вопросом. Подарок пока не кладём.</div>';
+    } else if (mine.length){
+      out.innerHTML = '<div class="msg good">Все подарки этому клиенту уже выданы.</div>';
+    } else {
+      out.innerHTML = '<div class="msg good">Этому клиенту подарок не положен. Оформляйте заказ как обычно.</div>';
+    }
+  }
+
+  // ---------- запись ----------
+  $("form").addEventListener("submit", e=>{
+    e.preventDefault();
+    const el = $("formMsg");
+    const r = {
+      manager: session.name,
+      refName: $("refName").value.trim(), refPhone: normPhone($("refPhone").value),
+      newName: $("newName").value.trim(), newPhone: normPhone($("newPhone").value),
+      amount: Number(String($("amount").value).replace(/\D/g,""))
+    };
+    if (!r.refName || !r.newName) return msg(el,"err","Заполните оба имени: кто рекомендовал и кого привели.");
+    if (r.refPhone.length!==11 || r.newPhone.length!==11) return msg(el,"err","Проверьте номера: нужно 11 цифр, например +7 928 123-45-67.");
+    if (r.refPhone===r.newPhone) return msg(el,"err","Номера совпадают. Клиент не может порекомендовать сам себя.");
+    if (!r.amount) return msg(el,"err","Впишите сумму первого заказа.");
+    if (r.amount < MIN_ORDER) return msg(el,"err","Заказ меньше 20 000 ₽, поэтому подарки по программе не положены. Эту запись не сохраняем.");
+    save(r, false);
+  });
+
+  async function save(r, force){
+    const el = $("formMsg");
+    $("saveBtn").disabled = true;
+    msg(el,"ask","Сохраняю…");
+    try{
+      const j = await api("add", {record:r, force});
+      if (j.clash){
+        msg(el,"ask","Номер нового клиента уже есть в программе ("+esc(j.clash)+"). Значит, он может быть не новым."
+          + '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn small" id="asDisp">Записать под вопросом</button><button class="btn small ghost" id="cancelDisp">Не записывать</button></div>');
+        $("asDisp").onclick = ()=>save(r, true);
+        $("cancelDisp").onclick = ()=>msg(el,"","");
+        return;
+      }
+      if (!j.ok) return msg(el,"err", esc(j.message || "Не сохранилось. Попробуйте ещё раз."));
+      $("form").reset();
+      if (j.status === "disputed"){
+        msg(el,"ask","Записано под вопросом. Подарки по этой записи пока не выдаём, решение появится во вкладке «История».");
+      } else {
+        const text = r.refName+", ваш знакомый сделал заказ, спасибо! Коробку антизасора положим в ваш следующий заказ 🌿";
+        msg(el,"good","<b>Записано.</b> Положите новичку 6 шт. антизасора в этот заказ.<br>Отправьте "+esc(r.refName)+" в WhatsApp:"
+          + '<div class="copybox" id="copyText">'+esc(text)+'</div><button class="btn small ghost" id="copyBtn" type="button">Скопировать текст</button>');
+        $("copyBtn").onclick = async ()=>{
+          try{ await navigator.clipboard.writeText(text); $("copyBtn").textContent = "Скопировано"; }
+          catch(e){ const s=window.getSelection(), rg=document.createRange(); rg.selectNodeContents($("copyText")); s.removeAllRanges(); s.addRange(rg); $("copyBtn").textContent = "Текст выделен, скопируйте его"; }
+        };
+      }
+      load();
+    }catch(e){ if (e.message!=="pin") msg(el,"err","Нет связи, запись не сохранилась. Нажмите «Записать клиента» ещё раз."); }
+    finally{ $("saveBtn").disabled = false; }
+  }
+
+  async function give(ids){
+    try{
+      const j = await api("give", {ids, by: session.name});
+      if (!j.ok) throw new Error();
+      $("search").value = ""; $("searchRes").innerHTML = '<div class="msg good">Отмечено: подарок положен в заказ.</div>';
+      load();
+    }catch(e){ if (e.message!=="pin") alert("Не удалось отметить подарок. Проверьте интернет и попробуйте ещё раз."); }
+  }
+  async function act2(action, data){
+    try{ const j = await api(action, data); if (!j.ok) throw new Error(); load(); }
+    catch(e){ if (e.message!=="pin") alert("Не удалось сохранить. Попробуйте ещё раз."); }
+  }
+
+  $("mailSave").addEventListener("click", async ()=>{
+    const el = $("mailMsg"); const count = Number(String($("mailCount").value).replace(/\D/g,""));
+    if (!count) return msg(el,"err","Впишите примерное число отправленных сообщений.");
+    try{ const j = await api("mailing", {manager: session.name, count}); if(!j.ok) throw new Error(); $("mailCount").value=""; msg(el,"good","Сохранено."); load(); }
+    catch(e){ if (e.message!=="pin") msg(el,"err","Не сохранилось. Попробуйте ещё раз."); }
+  });
+
+  // ---------- старт ----------
+  if (API_URL.indexOf("http") !== 0){
+    $("nodb").hidden = false; $("nodb").textContent = "Страница ещё не подключена к таблице: вставьте ссылку в строку API_URL в файле index.html.";
+    return;
+  }
+  if (session.pin){ showApp(); load(); } else { $("login").hidden = false; }
+  setInterval(()=>{ if (session.pin && !document.hidden) load(); }, 60000);
+  document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && session.pin) load(); });
+})();
+
+</script>
+</body>
+</html>
