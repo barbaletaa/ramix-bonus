@@ -100,8 +100,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
   <!-- ВХОД -->
   <section id="login" hidden>
     <h2>Вход</h2>
-    <div class="field"><label for="lName">Ваше имя</label><input id="lName" autocomplete="off"></div>
-    <div class="field"><label for="lPin">Код доступа</label><input id="lPin" inputmode="numeric" autocomplete="off"><p class="hint">Код даёт Марьям. Вводится один раз, дальше телефон его запомнит.</p></div>
+    <div class="field"><label for="lPin">Ваш личный код</label><input id="lPin" inputmode="numeric" autocomplete="off"><p class="hint">Код даёт Марьям. Вводится один раз, дальше телефон его запомнит.</p></div>
     <button class="btn wide" id="lBtn" type="button">Войти</button>
     <div id="lMsg" aria-live="polite"></div>
   </section>
@@ -229,6 +228,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
       const j = await api("list");
       if (!j.ok) throw new Error(j.error||"err");
       records = j.records || []; mailing = j.mailing || []; settings = j.settings || {}; isOwner = !!j.owner;
+      if (j.name && j.name !== session.name){ session.name = j.name; try{ localStorage.setItem("ramix_session", JSON.stringify(session)); }catch(e){} }
       $("nodb").hidden = true;
       $("sync").textContent = "Обновлено в " + new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
       render();
@@ -246,13 +246,13 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
     $("app").hidden = true; $("login").hidden = false; msg($("lMsg"), text ? "err" : "", text ? esc(text) : "");
   }
   $("lBtn").addEventListener("click", async ()=>{
-    const name = $("lName").value.trim(), pin = $("lPin").value.trim();
-    if (!name || !pin) return msg($("lMsg"),"err","Впишите имя и код доступа.");
-    session = {name, pin};
+    const pin = $("lPin").value.trim();
+    if (!pin) return msg($("lMsg"),"err","Впишите свой код.");
+    session = {name:"", pin};
     $("lBtn").disabled = true;
     try{
       const j = await api("list");
-      if (j.ok){ try{ localStorage.setItem("ramix_session", JSON.stringify(session)); }catch(e){}
+      if (j.ok){ session.name = j.name || ""; try{ localStorage.setItem("ramix_session", JSON.stringify(session)); }catch(e){}
         records=j.records||[]; mailing=j.mailing||[]; settings=j.settings||{}; isOwner=!!j.owner; showApp(); render(); }
     }catch(e){ if (e.message !== "pin") msg($("lMsg"),"err","Нет связи. Проверьте интернет и попробуйте ещё раз."); else msg($("lMsg"),"err","Неверный код доступа."); }
     finally{ $("lBtn").disabled = false; }
