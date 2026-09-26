@@ -188,7 +188,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
 <script>
 (function(){
   // ▼▼▼ СЮДА ВСТАВИТЬ ССЫЛКУ ВЕБ-ПРИЛОЖЕНИЯ ИЗ GOOGLE APPS SCRIPT ▼▼▼
-  const API_URL = "https://script.google.com/macros/s/AKfycbxU2hUxgyNkh4yaS2FWSk3SYmU5NXu0llO5JGixDt2y3knsIaaXimaw21JygDPrSHaGRg/exec";
+  const API_URL = "ВСТАВЬТЕ_ССЫЛКУ_СЮДА";
   // ▲▲▲
 
   const GIFT_COST = 2700;   // коробка 1 800 + 6 шт. 900
@@ -271,7 +271,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
   const active = r => r.status === "owed" || r.status === "given";
   function render(){
     const act = records.filter(active);
-    const owed = records.filter(r=>r.status==="owed");
+    const owed = giftsOwed();
     const n = act.length;
     $("sNew").textContent = n;
     $("sBar").style.width = Math.min(100, n/LIMIT*100) + "%";
@@ -301,22 +301,44 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
   }
 
   function card(r, actsHtml){
-    const tags = {owed:"Подарок к выдаче", given:"Выдан " + date(r.givenAt), disputed:"Под вопросом", rejected:"Отклонено"};
+    const tags = {owed:"Коробка к выдаче", given:"Коробка выдана " + date(r.givenAt), disputed:"Под вопросом", rejected:"Отклонено"};
     return '<li class="item"><div class="item-top"><div>'
       + '<div class="meta">' + date(r.createdAt) + '</div>'
       + '<div class="who">'+esc(r.refName)+' привёл(а) '+esc(r.newName)+'</div>'
       + '<div class="meta">Первый заказ '+rub(+r.amount||0)+', менеджер '+esc(r.manager||"—")+'</div>'
       + '<div class="meta">'+fmtPhone(r.refPhone)+' → '+fmtPhone(r.newPhone)+'</div>'
+      + (active(r) ? '<div class="meta">6 шт. новичку: '+(r.newGiftAt ? 'выданы '+date(r.newGiftAt) : '<b>ещё не выданы</b>')+'</div>' : '')
       + (r.note ? '<div class="meta">'+esc(r.note)+'</div>' : '')
       + '</div><span class="tag '+r.status+'">'+tags[r.status]+'</span></div>'
       + (actsHtml ? '<div class="acts">'+actsHtml+'</div>' : '') + '</li>';
   }
 
+  // все невыданные подарки: коробка тому, кто привёл, и 6 шт. новичку — отдельно
+  function giftsOwed(){
+    const out = [];
+    records.forEach(r=>{
+      if (r.status === "owed") out.push({kind:"ref", r});
+      if (active(r) && !r.newGiftAt) out.push({kind:"new", r});
+    });
+    return out;
+  }
+  function giftCard(g){
+    const r = g.r;
+    const top = g.kind === "ref"
+      ? '<div class="who">Коробка антизасора (12 шт.) для '+esc(r.refName)+'</div><div class="meta">'+fmtPhone(r.refPhone)+' · за то, что привёл(а) '+esc(r.newName)+'</div>'
+      : '<div class="who">6 шт. антизасора для '+esc(r.newName)+'</div><div class="meta">'+fmtPhone(r.newPhone)+' · новый клиент от '+esc(r.refName)+'</div>';
+    const when = g.kind === "ref" ? "кладём в его следующий заказ" : "кладём в первый заказ";
+    return '<li class="item"><div class="item-top"><div>'+top+'<div class="meta">'+date(r.createdAt)+', '+when+'</div></div>'
+      + '<span class="tag owed">К выдаче</span></div>'
+      + '<div class="acts"><button class="btn small" data-kind="'+g.kind+'" data-id="'+r.id+'">Положено в заказ</button></div></li>';
+  }
   function renderOwed(owed){
     const ul = $("owedList");
     if (!owed.length){ ul.innerHTML = '<li class="empty">Сейчас никому не нужно класть подарок.</li>'; return; }
-    ul.innerHTML = owed.map(r => card(r, '<button class="btn small" data-give="'+r.id+'">Коробка положена в заказ</button>')).join("");
-    ul.querySelectorAll("[data-give]").forEach(b=>b.addEventListener("click", ()=>give([b.dataset.give])));
+    ul.innerHTML = owed.map(giftCard).join("");
+    ul.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click", ()=>{
+      b.dataset.kind === "ref" ? give([b.dataset.id], []) : give([], [b.dataset.id]);
+    }));
   }
 
   function renderAll(){
@@ -345,14 +367,17 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
     const q = normPhone($("search").value);
     const out = $("searchRes");
     if (q.length < 11){ out.innerHTML = ""; return; }
-    const mine = records.filter(r=>String(r.refPhone)===q);
-    const owed = mine.filter(r=>r.status==="owed");
+    const mine = records.filter(r=>String(r.refPhone)===q || String(r.newPhone)===q);
+    const refOwed = records.filter(r=>String(r.refPhone)===q && r.status==="owed");
+    const newOwed = records.filter(r=>String(r.newPhone)===q && active(r) && !r.newGiftAt);
     const disp = mine.filter(r=>r.status==="disputed");
-    if (owed.length){
-      out.innerHTML = '<div class="found"><div class="big">Положите в заказ: '+owed.length+' '+(owed.length===1?"коробку":"коробки")+' антизасора</div>'
-        + '<div class="meta">'+esc(owed[0].refName)+' привёл(а): '+owed.map(r=>esc(r.newName)).join(", ")+'</div>'
+    if (refOwed.length || newOwed.length){
+      let lines = "";
+      if (refOwed.length) lines += '<div class="big">'+refOwed.length+' '+(refOwed.length===1?"коробку":"коробки")+' антизасора (12 шт.)</div><div class="meta">'+esc(refOwed[0].refName)+' привёл(а): '+refOwed.map(r=>esc(r.newName)).join(", ")+'</div>';
+      if (newOwed.length) lines += '<div class="big" style="margin-top:8px">6 шт. антизасора</div><div class="meta">подарок новому клиенту от '+esc(newOwed[0].refName)+'</div>';
+      out.innerHTML = '<div class="found"><div class="meta">Положите в заказ:</div>'+lines
         + '<div class="acts" style="margin-top:10px"><button class="btn small" id="giveAll">Положено в заказ</button></div></div>';
-      $("giveAll").addEventListener("click", ()=>give(owed.map(r=>r.id)));
+      $("giveAll").addEventListener("click", ()=>give(refOwed.map(r=>r.id), newOwed.map(r=>r.id)));
     } else if (disp.length){
       out.innerHTML = '<div class="msg ask">По этому клиенту есть запись под вопросом. Подарок пока не кладём.</div>';
     } else if (mine.length){
@@ -399,8 +424,16 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
         msg(el,"ask","Записано под вопросом. Подарки по этой записи пока не выдаём, решение появится во вкладке «История».");
       } else {
         const text = r.refName+", ваш знакомый сделал заказ, спасибо! Коробку антизасора положим в ваш следующий заказ 🌿";
-        msg(el,"good","<b>Записано.</b> Положите новичку 6 шт. антизасора в этот заказ.<br>Отправьте "+esc(r.refName)+" в WhatsApp:"
+        msg(el,"good","<b>Записано.</b> Положите "+esc(r.newName)+" 6 шт. антизасора в этот заказ и отметьте:"
+          + '<div style="margin:10px 0 14px"><button class="btn small" id="newGiven" type="button">6 шт. положены в заказ</button></div>'
+          + "Отправьте "+esc(r.refName)+" в WhatsApp:"
           + '<div class="copybox" id="copyText">'+esc(text)+'</div><button class="btn small ghost" id="copyBtn" type="button">Скопировать текст</button>');
+        $("newGiven").onclick = async ()=>{
+          await load();
+          const rec = records.find(x=>x.newPhone===r.newPhone && active(x) && !x.newGiftAt);
+          if (rec){ await give([], [rec.id]); }
+          $("newGiven").textContent = "Отмечено ✓"; $("newGiven").disabled = true;
+        };
         $("copyBtn").onclick = async ()=>{
           try{ await navigator.clipboard.writeText(text); $("copyBtn").textContent = "Скопировано"; }
           catch(e){ const s=window.getSelection(), rg=document.createRange(); rg.selectNodeContents($("copyText")); s.removeAllRanges(); s.addRange(rg); $("copyBtn").textContent = "Текст выделен, скопируйте его"; }
@@ -411,9 +444,9 @@ input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--go
     finally{ $("saveBtn").disabled = false; }
   }
 
-  async function give(ids){
+  async function give(ids, newIds){
     try{
-      const j = await api("give", {ids, by: session.name});
+      const j = await api("give", {ids, newIds: newIds || [], by: session.name});
       if (!j.ok) throw new Error();
       $("search").value = ""; $("searchRes").innerHTML = '<div class="msg good">Отмечено: подарок положен в заказ.</div>';
       load();
